@@ -32,6 +32,7 @@
   - [YOLO To FastLabel](#yolo-to-fastlabel)
   - [Pascal VOC To FastLabel](#pascal-voc-to-fastlabel)
   - [labelme To FastLabel](#labelme-to-fastlabel)
+- [Model](#model)
 - [API Docs](#api-docs)
 
 ## Installation
@@ -767,6 +768,8 @@ task_id = client.create_video_task(
 ##### Limitation
 
 - You can upload up to a size of 250 MB.
+- You can upload only videos with H.264 encoding.
+- You can upload only MP4 file format.
 
 #### Find Task
 
@@ -2393,6 +2396,8 @@ Create a new dataset.
 ```python
 dataset = client.create_dataset(
     name="object-detection", # Only lowercase alphanumeric characters + hyphen is available
+    tags=["cat", "dog"], # max 5 tags per dataset.
+    visibility="workspace", # visibility can be 'workspace' or 'public' or 'organization'
     license="The MIT License" # Optional
 )
 ```
@@ -2405,6 +2410,8 @@ See API docs for details.
 {
     'id': 'YOUR_DATASET_ID',
     'name': 'object-detection',
+    'tags': ['cat', 'dog'],
+    'visibility': 'workspace',
     'license': 'The MIT License',
     'createdAt': '2022-10-31T02:20:00.248Z',
     'updatedAt': '2022-10-31T02:20:00.248Z'
@@ -2431,11 +2438,14 @@ datasets = client.get_datasets()
 
 The success response is the same as when created, but it is an array.
 
-You can filter by type and keywords.
+You can filter by keywords and visibility, tags.
 
 ```python
 datasets = client.get_datasets(
-    keyword="dog"
+    keyword="dog",
+    tags=["cat", "dog"], # max 5 tags per dataset.
+    license="mit",
+    visibility="workspace", # visibility can be 'workspace' or 'public' or 'organization'.
 )
 ```
 
@@ -2447,7 +2457,7 @@ Update a single dataset.
 
 ```python
 dataset = client.update_dataset(
-    dataset_id="YOUR_DATASET_ID", name="object-detection"
+    dataset_id="YOUR_DATASET_ID", name="object-detection", tags=["cat", "dog"]
 )
 ```
 
@@ -2470,11 +2480,45 @@ Create object in the dataset.
 The types of objects that can be created are "image", "video", and "audio".
 There are type-specific methods. but they can be used in the same way.
 
+Created object are automatically assigned to the "latest" dataset version.
+
 ```python
 dataset_object = client.create_dataset_object(
-    dataset_version_id="YOUR_DATASET_VERSION_ID",
+    dataset="YOUR_DATASET_NAME",
     name="brushwood_dog.jpg",
     file_path="./brushwood_dog.jpg",
+    tags=["dog"], # max 5 tags per dataset object.
+    annotations=[
+        {
+            "keypoints": [
+                {
+                    "value": [
+                        102.59,
+                        23.04,
+                        1
+                    ],
+                    "key": "head"
+                }
+            ],
+            "attributes": [
+                {
+                    "value": "Scottish field",
+                    "key": "kind"
+                }
+            ],
+            "confidenceScore": 0,
+            "rotation": 0,
+            "points": [
+                0
+            ],
+            "value": "dog",
+            "type": "bbox" # type can be 'bbox', 'segmentation'.
+        }
+    ],
+    custom_metadata={
+      "key": "value",
+      "metadata": "metadata-value"
+    }
 )
 ```
 
@@ -2484,12 +2528,54 @@ See API docs for details.
 
 ```python
 {
-    'id': 'YOUR_DATASET_OBJECT_ID',
     'name': 'brushwood_dog.jpg',
     'size': 6717,
     'height': 225,
     'width': 225,
-    'groupId': None,
+    'tags': [
+        'dog'
+    ],
+    "annotations": [
+        {
+            "id": "YOUR_DATASET_OBJECT_ANNOTATION_ID",
+            "type": "bbox",
+            "title": "dog",
+            "value": "dog",
+            "points": [
+                0
+            ],
+            "attributes": [
+                {
+                    "value": "Scottish field",
+                    "key": "kind",
+                    "name": "Kind",
+                    "type": "text"
+                }
+            ],
+            "keypoints": [
+                {
+                    "edges": [
+                        "right_shoulder",
+                        "left_shoulder"
+                    ],
+                    "value": [
+                        102.59,
+                        23.04,
+                        1
+                    ],
+                    "key": "head",
+                    "name": "頭"
+                }
+            ],
+            "rotation": 0,
+            "color": "#FF0000",
+            "confidenceScore": -1
+        }
+    ],
+  "customMetadata": {
+    "key": "value",
+    "metadata": "metadata-value"
+  },
     'createdAt': '2022-10-30T08:32:20.748Z',
     'updatedAt': '2022-10-30T08:32:20.748Z'
 }
@@ -2501,7 +2587,26 @@ Find a single dataset object.
 
 ```python
 dataset_object = client.find_dataset_object(
-    dataset_object_id="YOUR_DATASET_OBJECT_ID"
+    dataset_id="YOUR_DATASET_ID",
+    object_name="brushwood_dog.jpg"
+)
+```
+
+You can find a object of specified revision by version or revision_id.
+
+```python
+dataset_object = client.find_dataset_object(
+    dataset_id="YOUR_DATASET_ID",
+    object_name="brushwood_dog.jpg",
+    version="YOUR_VERSION_NAME" # default is "latest"
+)
+```
+
+```python
+dataset_object = client.find_dataset_object(
+    dataset_id="YOUR_DATASET_ID",
+    object_name="brushwood_dog.jpg",
+    revision_id="YOUR_REVISION_ID" # 8 characters or more
 )
 ```
 
@@ -2512,20 +2617,54 @@ Success response is the same as when created.
 Get all dataset object in the dataset. (Up to 1000 tasks)
 
 ```python
-dataset_objects = client.get_dataset_objects(dataset_version_id="YOUR_DATASET_VERSION_ID")
+dataset_objects = client.get_dataset_objects(dataset="YOUR_DATASET_NAME")
 ```
 
 The success response is the same as when created, but it is an array.
 
-You can filter by keywords.
+You can filter by version or revision_id and tags.
 
 ```python
 dataset_objects = client.get_dataset_objects(
-    dataset_version_id="YOUR_DATASET_VERSION_ID", keyword="dog"
+    dataset="YOUR_DATASET_NAME",
+    version="latest", # default is "latest"
+    tags=["cat"],
 )
 ```
 
-If you wish to retrieve more than 1000 data sets, please refer to the Task [sample code](#get-tasks).
+```python
+dataset_objects = client.get_dataset_objects(
+    dataset="YOUR_DATASET_NAME",
+    revision_id="YOUR_REVISION_ID" # 8 characters or more
+)
+```
+
+### Download Dataset Objects
+
+Download dataset objects in the dataset to specific directories.
+
+You can filter by version, tags and types.
+
+```python
+client.download_dataset_objects(
+  dataset="YOUR_DATASET_NAME",
+  path="YOUR_DOWNLOAD_PATH",
+  version="latest", # default is "latest"
+  tags=["cat"],
+  types=["train", "valid"],  # choices are "train", "valid", "test" and "none" (Optional)
+)
+```
+
+### Delete Dataset Object
+
+Delete a single dataset object.
+
+```python
+client.delete_dataset_object(
+    dataset_id="YOUR_DATASET_ID",
+    object_name="brushwood_dog.jpg"
+)
+```
 
 ## Converter
 
@@ -2862,7 +3001,210 @@ for image_file_path in glob.iglob(os.path.join(input_dataset_path, "**/**.jpg"),
 
 > Please check const.COLOR_PALLETE for index colors.
 
-## Execute endpoint
+## Model
+
+### Get training jobs
+
+Get training jobs.
+
+```python
+def get_training_jobs() -> list[dict]:
+    all_training_jobs = []
+    offset = None
+    while True:
+        time.sleep(1)
+
+        training_jobs = client.get_training_jobs(offset=offset)
+        all_training_jobs.extend(training_jobs)
+
+        if len(training_jobs) > 0:
+            offset = len(all_training_jobs)
+        else:
+            break
+    return all_training_jobs
+
+```
+
+#### Find Training job
+
+Find a single training job.
+
+```python
+task = client.find_training_job(id="YOUR_TRAINING_ID")
+```
+
+#### Response
+
+Example of two training jobs.
+
+```python
+[
+    {
+        "trainingJobId": "f40c5838-4c3a-482f-96b7-f77e16c96fed",
+        "status": "in_progress",
+        "baseModelName": "FastLabel Object Detection High Accuracy - 汎用",
+        "instanceType": "ml.p3.2xlarge",
+        "epoch": 300,
+        "projects": [
+            "image-bbox"
+        ],
+        "statuses": [],
+        "tags": [],
+        "contentCount": 23,
+        "userName": "Admin",
+        "createdAt": "2023-10-31T07:10:28.306Z",
+        "completedAt": null,
+        "customModel": {
+            "modelId": "",
+            "modelName": "",
+            "modelURL": "",
+            "classes": []
+        }
+    },
+    {
+        "trainingJobId": "1d2bc86a-c7f1-40a5-8e85-48246cc3c8d2",
+        "status": "completed",
+        "baseModelName": "custom-object-detection-image",
+        "instanceType": "ml.p3.2xlarge",
+        "epoch": 300,
+        "projects": [
+            "image-bbox"
+        ],
+        "statuses": [
+            "approved"
+        ],
+        "tags": [
+            "trainval"
+        ],
+        "contentCount": 20,
+        "userName": "Admin",
+        "createdAt": "2023-10-31T06:56:28.112Z",
+        "completedAt": "2023-10-31T07:08:26.000Z",
+        "customModel": {
+            "modelId": "a6728876-2eb7-49b5-9fd8-7dee1b8a81b3",
+            "modelName": "fastlabel_object_detection-2023-10-31-07-08-29",
+            "modelURL": "URL for download model file",
+            "classes": [
+                "person"
+            ]
+        }
+    }
+]
+```
+
+### Execute training job
+
+Get training jobs.
+
+```python
+training_job = client.execute_training_job(
+    dataset_name="dataset_name",
+    base_model_name="fastlabel_object_detection_light",  // "fastlabel_object_detection_light" or "fastlabel_object_detection_high_accuracy" or "fastlabel_u_net_general"
+    epoch=300,
+    use_dataset_train_val=True,
+    resize_option="fixed",  // optional, "fixed" or "none"
+    resize_dimension=1024, // optional, 512 or 1024
+    annotation_value="person", // Annotation value is required if choose "fastlabel_keypoint_rcnn"
+    config_file_path="config.yaml", // optional, YAML file path for training config file.
+)
+
+```
+
+### Get evaluation jobs
+
+Get evaluation jobs.
+
+```python
+def get_evaluation_jobs() -> list[dict]:
+    all_evaluation_jobs = []
+    offset = None
+    while True:
+        time.sleep(1)
+
+        evaluation_jobs = client.get_evaluation_jobs(offset=offset)
+        all_evaluation_jobs.extend(evaluation_jobs)
+
+        if len(evaluation_jobs) > 0:
+            offset = len(all_evaluation_jobs)
+        else:
+            break
+    return all_evaluation_jobs
+
+```
+
+#### Find Evaluation job
+
+Find a single evaluation job.
+
+```python
+evaluation_job = client.find_evaluation_job(id="YOUR_EVALUATION_ID")
+```
+
+#### Response
+
+Example of two evaluation jobs.
+
+```python
+
+{
+  id: "50873ea1-e008-48db-a368-241ca88d6f67",
+  version: 59,
+  status: "in_progress",
+  modelType: "builtin",
+  modelName: "FastLabel Object Detection Light - 汎用",
+  customModelId: None,
+  iouThreshold: 0.8,
+  confidenceThreshold: 0.4,
+  contentCount: 0,
+  gtCount: 0,
+  predCount: 0,
+  mAP: 0,
+  recall: 0,
+  precision: 0,
+  f1: 0,
+  confusionMatrix: None,
+  duration: 0,
+  evaluationSource: "dataset",
+  projects: [],
+  statuses: [],
+  tags: [],
+  datasetId: "deacbe6d-406f-4086-bd87-80ffb1c1a393",
+  dataset: {
+    id: "deacbe6d-406f-4086-bd87-80ffb1c1a393",
+    workspaceId: "df201d3c-af00-423a-aa7f-827376fd96de",
+    name: "sample-dataset",
+    createdAt: "2023-12-20T10:44:12.198Z",
+    updatedAt: "2023-12-20T10:44:12.198Z",
+  },
+  datasetRevisionId: "2d26ab64-dfc0-482d-9211-ce8feb3d480b",
+  useDatasetTest: True,
+  userName: "",
+  completedAt: None,
+  createdAt: "2023-12-21T09:08:16.111Z",
+  updatedAt: "2023-12-21T09:08:18.414Z",
+};
+
+```
+
+### Execute evaluation job
+
+Execute evaluation jobs.
+
+```python
+training_job = client.execute_evaluation_job(
+    dataset_name="DATASET_NAME",
+    model_name="fastlabel_object_detection_light",
+    // If you want to use the built-in model, select the following.
+    - "fastlabel_object_detection_light"
+    - "fastlabel_object_detection_high_accuracy"
+    - "fastlabel_fcn_resnet"
+    // If you want to use the custom model, please fill　out model name.
+    use_dataset_test=True,
+)
+
+```
+
+### Execute endpoint
 
 Create the endpoint from the screen at first.
 
@@ -2900,9 +3242,7 @@ if __name__ == '__main__':
   cv2.imwrite(RESULT_IMAGE_FILE_PATH, img)
 ```
 
-## Model Monitoring
-
-### Create Request Results
+### Create Request Results for Monitoring
 
 You can integrate the results of model endpoint calls,
 which are targeted for aggregation in model monitoring, from an external source.

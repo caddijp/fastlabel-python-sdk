@@ -35,7 +35,6 @@ def download_image(task: dict):
 
 
 if __name__ == "__main__":
-
     os.makedirs(IMAGE_DIR, exist_ok=True)
 
     tasks = get_all_tasks()

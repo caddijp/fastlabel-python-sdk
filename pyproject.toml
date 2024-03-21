@@ -1,6 +1,6 @@
 [project]
 name = "fastlabel"
-version = "0.14.0.dev0"
+version = "0.14.12.dev0"
 description = "The official Python SDK for FastLabel API, the Data Platform for AI"
 authors = [
     { name = "eisuke-ueta", email = "eisuke.ueta@fastlabel.ai" }
@@ -12,6 +12,7 @@ dependencies = [
     "xmltodict>=0.13.0",
     "Pillow>=10.0.0",
     "opencv-python-headless>=4.8.0.76",
+    "aiohttp>=3.8.5",
 ]
 readme = "README.md"
 requires-python = ">=3.8"

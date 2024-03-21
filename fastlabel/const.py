@@ -216,11 +216,14 @@ SUPPORTED_AUDIO_SIZE = 120 * math.pow(1024, 2)
 # API can accept under 2GB
 SUPPORTED_DICOM_SIZE = 2000 * math.pow(1024, 2)
 
-# API can accept under 30 MB
-SUPPORTED_PCD_SIZE = 30 * math.pow(1024, 2)
+# API can accept under 100 MB
+SUPPORTED_PCD_SIZE = 100 * math.pow(1024, 2)
 
 # API can accept under 250 MB
 SUPPORTED_OBJECT_SIZE = 250 * math.pow(1024, 2)
+
+# Only 'avc1' and 'H264' are supported for video task creation.
+SUPPORTED_FOURCC = ["avc1"]
 
 
 SUPPORTED_INFERENCE_IMAGE_SIZE = 6 * math.pow(1024, 2)
@@ -244,3 +247,10 @@ class Priority(Enum):
     low = 10
     medium = 20
     high = 30
+
+
+class DatasetObjectType(Enum):
+    none = "none"
+    train = "train"
+    valid = "valid"
+    test = "test"

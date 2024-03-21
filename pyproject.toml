@@ -1,6 +1,6 @@
 [project]
 name = "fastlabel"
-version = "0.14.0.dev0"
+version = "0.14.12.dev0"
 description = "The official Python SDK for FastLabel API, the Data Platform for AI"
 authors = [
     { name = "eisuke-ueta", email = "eisuke.ueta@fastlabel.ai" }

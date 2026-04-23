@@ -1,0 +1,15 @@
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: fastlabel-python-sdk
+  description: The official Python SDK for FastLabel API, the Data Platform for AI
+  annotations:
+    github.com/project-slug: caddijp/fastlabel-python-sdk
+    backstage.io/source-location: url:https://github.com/caddijp/fastlabel-python-sdk
+  tags:
+    - touches-customer-data
+spec:
+  type: repository
+  lifecycle: production
+  owner: group:TODO-set-owner
